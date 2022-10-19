@@ -23,6 +23,7 @@ namespace BaltaDataAccess
                 //ListCategories(connection);
                 //UpdateCategory(connection);
                 //DeleteCategory(connection);
+                ExecuteProcedure(connection);
 
                 //Evitar colocar muita coisa com a conexão aberta para não sobrecarregar a conexão  
             }
@@ -149,6 +150,18 @@ namespace BaltaDataAccess
             });
 
             System.Console.WriteLine($"{rows} - registros deletado(s)");
+        }
+    
+        static void ExecuteProcedure(SqlConnection connection){
+            var procedure = "spDeleteStudent";
+            var pars = new { StudentId = "30698791-3453-4e2a-b52c-d51da2d6a5a8"};
+
+            var affectedRows = connection.Execute(
+                procedure,
+                pars,
+                commandType: System.Data.CommandType.StoredProcedure);
+
+            System.Console.WriteLine($"{affectedRows} - linhas afetada(s)");
         }
     }
 }
