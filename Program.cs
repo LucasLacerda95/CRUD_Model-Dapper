@@ -2,6 +2,7 @@
 using Microsoft.Data.SqlClient;
 using Dapper;
 using BaltaDataAccess.Models;
+using System.Data;
 
 
 //Dapper
@@ -23,7 +24,8 @@ namespace BaltaDataAccess
                 //ListCategories(connection);
                 //UpdateCategory(connection);
                 //DeleteCategory(connection);
-                ExecuteProcedure(connection);
+                //ExecuteProcedure(connection);
+                ExecuteReadProcedure(connection);
 
                 //Evitar colocar muita coisa com a conexão aberta para não sobrecarregar a conexão  
             }
@@ -159,9 +161,23 @@ namespace BaltaDataAccess
             var affectedRows = connection.Execute(
                 procedure,
                 pars,
-                commandType: System.Data.CommandType.StoredProcedure);
+                commandType: CommandType.StoredProcedure);
 
             System.Console.WriteLine($"{affectedRows} - linhas afetada(s)");
         }
+    
+        static void ExecuteReadProcedure(SqlConnection connection){
+            var procedure = "[spGetCoursesByCategory]";
+            var pars = new { CategoryId = "09ce0b7b-cfca-497b-92c0-3290ad9d5142" };
+            var courses = connection.Query(
+                procedure,
+                pars,
+                commandType: CommandType.StoredProcedure);
+            
+            foreach(var item in courses){
+                System.Console.WriteLine(item.Title);
+            }
+        }
+    
     }
 }
