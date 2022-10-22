@@ -25,8 +25,10 @@ namespace BaltaDataAccess
                 //UpdateCategory(connection);
                 //DeleteCategory(connection);
                 //ExecuteProcedure(connection);
-                ExecuteReadProcedure(connection);
-
+                //ExecuteReadProcedure(connection);
+                //ExecuteScalar(connection);
+                //ReadView(connection);
+                OneToOne(connection);
                 //Evitar colocar muita coisa com a conexão aberta para não sobrecarregar a conexão  
             }
         }
@@ -178,6 +180,70 @@ namespace BaltaDataAccess
                 System.Console.WriteLine(item.Title);
             }
         }
+
+        static void ExecuteScalar(SqlConnection connection){
+            
+            var category = new Category();
+            category.Title = "Amazon AWS";
+            category.Url = "amazon";
+            category.Description = "Categoria destinada aos serviços AWS";
+            category.Order = 8;
+            category.Summary = "AWS Cloud";
+            category.Featured = false;
+
+            var insertSql = @"
+                INSERT INTO 
+                    [Category]
+                OUTPUT inserted.[Id] 
+                VALUES (
+                    NEWID(),
+                    @Title,
+                    @Url,
+                    @Summary,
+                    @Order,
+                    @Description,
+                    @Featured)";
+
+                var id = connection.ExecuteScalar<Guid>(insertSql, new {
+                    category.Title,
+                    category.Url,
+                    category.Summary,
+                    category.Order,
+                    category.Description,
+                    category.Featured,
+                });
+                System.Console.WriteLine($"A categoria inserida foi: {id}");
+        }
     
+        static void ReadView(SqlConnection connection){
+            var sql = "SELECT * FROM [vwCourses]";
+
+            var courses = connection.Query(sql);
+
+                foreach(var item in courses){
+                    System.Console.WriteLine($"{item.Id} - {item.Title}");
+                }
+        }
+    
+        static void OneToOne(SqlConnection connection){
+            var sql = @"SELECT
+                * 
+            FROM 
+                [CareerItem] 
+            INNER JOIN 
+            [Course] ON [CareerItem].[CourseId] = [Course].[Id]";
+
+            var items = connection.Query<CarrerItem, Course, CarrerItem>(
+                sql,
+                (carrerItem, course)=>{
+                    carrerItem.Course = course;
+                    return carrerItem;  
+                }, splitOn: "Id");
+
+            foreach( var item in items){
+
+                System.Console.WriteLine($"{item.Title} - Curso: {item.Course?.Title}");
+            }
+        }
     }
 }
