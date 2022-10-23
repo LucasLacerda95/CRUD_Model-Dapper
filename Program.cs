@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Dapper;
 using BaltaDataAccess.Models;
 using System.Data;
+using System.Collections.Generic;
 
 
 //Dapper
@@ -28,7 +29,10 @@ namespace BaltaDataAccess
                 //ExecuteReadProcedure(connection);
                 //ExecuteScalar(connection);
                 //ReadView(connection);
-                OneToOne(connection);
+                //OneToOne(connection);
+                //OneToMany(connection);
+                QueryMutiple(connection);
+
                 //Evitar colocar muita coisa com a conexão aberta para não sobrecarregar a conexão  
             }
         }
@@ -233,7 +237,7 @@ namespace BaltaDataAccess
             INNER JOIN 
             [Course] ON [CareerItem].[CourseId] = [Course].[Id]";
 
-            var items = connection.Query<CarrerItem, Course, CarrerItem>(
+            var items = connection.Query<CareerItem, Course, CareerItem>(
                 sql,
                 (carrerItem, course)=>{
                     carrerItem.Course = course;
@@ -244,6 +248,69 @@ namespace BaltaDataAccess
 
                 System.Console.WriteLine($"{item.Title} - Curso: {item.Course?.Title}");
             }
+        }
+   
+        static void OneToMany(SqlConnection connection){
+            var sql = @"
+                SELECT
+                    [Career].[Id],
+                    [Career].[Title],
+                    [CareerItem].[CareerId],
+                    [CareerItem].[Title]
+                FROM
+                    [Career]
+                INNER JOIN
+                    [CareerItem] ON [CareerItem].[CareerId] = [Career].[Id]
+                ORDER BY
+                    [Career].[Title]";
+
+            var careers = new List<Career>();
+            var items = connection.Query<Career, CareerItem, Career>(
+                sql,
+                (career, item)=>{
+                    var car = careers.Where(x => x.Id == career.Id).FirstOrDefault();
+                    if(car == null){
+                        car = career;
+                        car.Items.Add(item);
+                        careers.Add(car);
+                    }else{
+                        car.Items.Add(item);
+                    }
+
+                    return career;  
+                }, splitOn: "CareerId");
+
+            foreach( var career in careers){
+
+                System.Console.WriteLine($"{career.Title}");
+
+                foreach( var item in career.Items){
+
+                System.Console.WriteLine($" - {item.Title}");
+            }
+            }
+        }
+    
+        static void QueryMutiple(SqlConnection connection){
+            var query = "SELECT * FROM [Category]; SELECT * FROM [Course];";
+
+            using(var multi = connection.QueryMultiple(query)){
+                var categories = multi.Read<Category>();
+                var courses = multi.Read<Course>();
+
+
+                foreach(var item in categories){
+                    System.Console.WriteLine(item.Title);
+                }
+
+                
+                foreach(var item in courses){
+                    System.Console.WriteLine(item.Title);
+                }
+            };
+
+
+
         }
     }
 }

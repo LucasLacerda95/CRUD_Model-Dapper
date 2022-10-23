@@ -3,7 +3,7 @@ using System;
 
 namespace BaltaDataAccess.Models{
 
-    public class CarrerItem{
+    public class CareerItem{
 
         public Guid Id { get; set; }
 
